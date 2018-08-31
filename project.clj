@@ -1,4 +1,4 @@
-(defproject trout "0.1.0-SNAPSHOT"
+(defproject org.clojars.fl00r/trout "0.1.0-SNAPSHOT"
   :description "CLJS routing library"
   :url "https://github.com/fl00r/trout"
   :license {:name "Eclipse Public License"
@@ -14,11 +14,6 @@
                                    :asset-path "/js/out"
                                    :output-to "trout.js"
                                    :output-dir "resources/js/out"}}]}
-  :profiles {:dev {:dependencies [[cider/piggieback "0.3.9"]
-                                  ;[figwheel-sidecar "0.5.16"]
-                                  ]
-                   :plugins [[cider/cider-nrepl "0.18.0"]
-                             [lein-cljsbuild "1.1.7"]
-                             ]
-                   :repl-options {:nrepl-middleware [cider.piggieback/wrap-cljs-repl
-                                                     ]}}})
+  :profiles {:dev {:dependencies []
+                   :plugins [[lein-cljsbuild "1.1.7"]]
+                   :repl-options {}}})
