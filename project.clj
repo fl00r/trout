@@ -12,7 +12,7 @@
                                    :cache-analysis true
                                    :source-map true
                                    :asset-path "/js/out"
-                                   :output-to "trout.js"
+                                   :output-to "resources/js/out/trout.js"
                                    :output-dir "resources/js/out"}}]}
   :profiles {:dev {:dependencies []
                    :plugins [[lein-cljsbuild "1.1.7"]]
