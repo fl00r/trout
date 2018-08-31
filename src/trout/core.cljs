@@ -116,6 +116,6 @@
   ([routes path opts]
    (let [paths (::paths routes)
          current-path (or (get-in paths [path ::path])
-                          (throw (ex-info "Path down't exist" {:path path})))
+                          (throw (ex-info "Path doesn't exist" {:path path})))
          rendered-path (current-path opts)]
      rendered-path)))

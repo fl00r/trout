@@ -41,7 +41,7 @@
 #=> #error {:message "Key :post-id is missing", :data {:missing-key :post-id}}
 
 (t/path-for routes ::delete-post {:post-id 123})
-#=> #error {:message "Path down't exist", :data {:path :cljs.user/delete-post}}
+#=> #error {:message "Path doesn't exist", :data {:path :cljs.user/delete-post}}
 ```
 
 
