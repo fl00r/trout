@@ -3,6 +3,10 @@
             [cljs.spec.alpha :as s]
             [clojure.string :as string]))
 
+(defn- eq
+  [s]
+  #(= % s))
+
 (s/def ::named-value
   (s/cat :name keyword? :value string?))
 
@@ -16,22 +20,19 @@
         :static ::static))
 
 (s/def ::route-definition
-  (s/coll-of ::route-part))
+  ;(s/coll-of ::route-part)
+  (s/cat :required (s/coll-of ::route-part)
+         :optional (s/? (s/coll-of ::route-name))
+         :meta (s/? map?)))
 
 (s/def ::route-name keyword?)
 
-(s/def ::routes (s/* (s/cat :route-name ::route-name
+(s/def ::routes (s/coll-of (s/cat :route-name ::route-name
                             :route-definition ::route-definition)))
-
-(s/def ::defroutes (s/cat :name symbol? :routes ::routes))
-
-(defn- eq
-  [s]
-  #(= % s))
 
 (defn- part-specs
   [route-definition]
-  (for [[idx [part-type part-data]] (map-indexed vector route-definition)
+  (for [[idx [part-type part-data]] (map-indexed vector (:required route-definition))
         :let [auto-key (keyword (str "trout.core/arg-" idx))
               named-key (case part-type
                           :named-value (:name part-data)
@@ -47,12 +48,12 @@
   [conformed-routes]
   (for [{:keys [route-name route-definition]} conformed-routes
         :let [parts (part-specs route-definition)]]
-    [route-name (apply concat parts)]))
+    [route-name (apply concat parts) (:meta route-definition)]))
 
 (defn- ors-specs
   [routes]
   (apply concat
-         (for [[rn sp] routes]
+         (for [[rn sp meta] routes]
            [rn (patch/cat sp)])))
 
 (defn- get-from-opts
@@ -62,7 +63,7 @@
 
 (defn- get-path
   [route-definition]
-  (let [parts (for [[part-type part-data] route-definition
+  (let [parts (for [[part-type part-data] (:required route-definition)
                     :let [part (case part-type
                                  :named-value (constantly (:value part-data))
                                  :named-any (get-from-opts part-data)
@@ -74,41 +75,52 @@
            (string/join "/")
            (str "/")))))
 
-#_(defn- get-path-spec
-  [route-definition]
-  (let [keys (for [[part-type part-data] route-definition
-                   :when (= part-type :named-any)]
-               part-data)]
-    (patch/keys :req-un part-data)))
-
 (defn- get-paths
   [conformed-routes]
   (let [paths (for [{:keys [route-name route-definition]} conformed-routes
-                    :let [path (get-path route-definition)
-                          ;path-spec (get-path-spec route-definition)
-                          ]]
-                [route-name {::path path
-                             ;:spec path-spec
-                             }])]
+                    :let [path (get-path route-definition)]]
+                [route-name {::path path}])]
     (into {}  paths)))
+
+(defn- transform
+  [routes]
+  (for [[route-name route-data] (partition 2 routes)
+        :let [[head _ tail] (partition-by (partial = :?) route-data)
+              [required optional meta]
+              (if tail
+                (let [[optional [meta]] (partition-by map? rest)]
+                  [head optional meta])
+                (let [[required [meta]] (partition-by map? head)]
+                  [required [] (or meta {})]))]]
+    [route-name required optional meta]))
 
 (defn compile
   [& routes]
-  (let [conformed-routes (s/conform ::routes routes)
-        routes (route-specs conformed-routes)
-        ors (ors-specs routes)
+  (let [transformed-routes (transform routes)
+        conformed-routes (s/conform ::routes transformed-routes)
+        all-routes (route-specs conformed-routes)
+        ors (ors-specs all-routes)
+        metas (->> all-routes
+                   (map (juxt first last))
+                   (into {}))
         paths (get-paths conformed-routes)]
     {::routes (s/spec (patch/or ors))
-     ::paths paths}))
+     ::paths paths
+     ::metas metas}))
 
 (defn match
   [routes path]
   (let [parts (rest (string/split path #"/"))
         specs (::routes routes)
-        route (s/conform specs parts)]
+        metas (::metas routes)
+        route (s/conform specs parts)
+        [route-name route-data] route
+        meta (get metas route-name)]
     (if (= route ::s/invalid)
       (throw (ex-info "Path doesn't match any" {:path path}))
-      route)))
+      {::name route-name
+       ::data route-data
+       ::meta meta})))
 
 (defn path-for
   ([routes path]
