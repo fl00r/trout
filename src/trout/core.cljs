@@ -15,20 +15,21 @@
 (s/def ::static string?)
 
 (s/def ::route-part
-  (s/or :named-value ::named-value
-        :named-any ::named-any
-        :static ::static))
+  (s/and #(not= % :?)
+   (s/or :named-value ::named-value
+         :named-any ::named-any
+         :static ::static)))
 
 (s/def ::route-definition
-  ;(s/coll-of ::route-part)
-  (s/cat :required (s/coll-of ::route-part)
-         :optional (s/? (s/coll-of ::route-name))
-         :meta (s/? map?)))
+  (s/spec (s/cat :required (s/* ::route-part)
+                 :? (s/? (eq :?))
+                 :optional (s/* ::route-part)
+                 :meta (s/? map?))))
 
 (s/def ::route-name keyword?)
 
-(s/def ::routes (s/coll-of (s/cat :route-name ::route-name
-                            :route-definition ::route-definition)))
+(s/def ::routes (s/* (s/cat :route-name ::route-name
+                                  :route-definition ::route-definition)))
 
 (defn- part-specs
   [route-definition]
@@ -82,22 +83,9 @@
                 [route-name {::path path}])]
     (into {}  paths)))
 
-(defn- transform
-  [routes]
-  (for [[route-name route-data] (partition 2 routes)
-        :let [[head _ tail] (partition-by (partial = :?) route-data)
-              [required optional meta]
-              (if tail
-                (let [[optional [meta]] (partition-by map? rest)]
-                  [head optional meta])
-                (let [[required [meta]] (partition-by map? head)]
-                  [(or required []) [] (or meta {})]))]]
-    [route-name required optional meta]))
-
 (defn compile
   [& routes]
-  (let [transformed-routes (transform routes)
-        conformed-routes (s/conform ::routes transformed-routes)
+  (let [conformed-routes (s/conform ::routes routes)
         all-routes (route-specs conformed-routes)
         ors (ors-specs all-routes)
         metas (->> all-routes
@@ -120,7 +108,7 @@
       (throw (ex-info "Path doesn't match any" {:path path}))
       {::name route-name
        ::data route-data
-       ::meta meta})))
+       ::meta (or meta {})})))
 
 (defn path-for
   ([routes path]
