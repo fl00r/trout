@@ -44,6 +44,22 @@
 #=> #error {:message "Path doesn't exist", :data {:path :cljs.user/delete-post}}
 ```
 
+## Benchmark
+
+```
+op=resolve lib=bidi ops=10000
+"Elapsed time: 140.707976 msecs"
+op=resolve lib=bide ops=10000
+"Elapsed time: 43.045317 msecs"
+op=resolve lib=trout ops=10000
+"Elapsed time: 49.862122 msecs"
+op=match lib=bidi ops=10000
+"Elapsed time: 1235.506547 msecs"
+op=match lib=bide ops=10000
+"Elapsed time: 34.076385 msecs"
+op=match lib=trout ops=10000
+"Elapsed time: 772.447998 msecs"
+```
 
 ## Usage
 
