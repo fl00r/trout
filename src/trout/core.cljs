@@ -91,7 +91,7 @@
                 (let [[optional [meta]] (partition-by map? rest)]
                   [head optional meta])
                 (let [[required [meta]] (partition-by map? head)]
-                  [required [] (or meta {})]))]]
+                  [(or required []) [] (or meta {})]))]]
     [route-name required optional meta]))
 
 (defn compile

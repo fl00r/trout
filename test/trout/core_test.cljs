@@ -4,6 +4,7 @@
 
 (def routes
   (sut/compile
+   ::root []
    ::route-1 [[:resource "router"]
               [:route "1"]]
    ::route-2 [[:resource "router"]
@@ -24,6 +25,7 @@
 (t/deftest path-for-test
   (t/are [l r]
       (= (apply sut/path-for routes l) r)
+    [::root] "/"
     [::route-1] "/router/1"
     [::route-2] "/router/2"
     [::new-route] "/router/new"
@@ -34,6 +36,9 @@
 (t/deftest match-test
   (t/are [l r]
       (= (sut/match routes l) r)
+    "/" {::sut/name ::root
+         ::sut/data {}
+         ::sut/meta {}}
     "/router/1" {::sut/name ::route-1
                  ::sut/data {:resource "router"
                              :route "1"}
