@@ -26,6 +26,8 @@
   (t/are [l r]
       (= (apply sut/path-for routes l) r)
     [::root] "/"
+    [::root {}] "/"
+    [::root {} {"foo" "bar"}] "/?foo=bar"
     [::route-1] "/router/1"
     [::route-2] "/router/2"
     [::new-route] "/router/new"

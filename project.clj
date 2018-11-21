@@ -1,4 +1,4 @@
-(defproject org.clojars.fl00r/trout "0.1.3-SNAPSHOT"
+(defproject org.clojars.fl00r/trout "0.1.4"
   :description "CLJS routing library"
   :url "https://github.com/fl00r/trout"
   :license {:name "Eclipse Public License"

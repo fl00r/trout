@@ -7,3 +7,5 @@
    :optimizations :none
    :cache-analysis true
    :source-map true})
+
+;; lein trampoline run -m clojure.main scripts/repl.clj

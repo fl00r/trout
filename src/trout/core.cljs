@@ -70,18 +70,25 @@
                                  :named-any (get-from-opts part-data)
                                  :static (constantly part-data))]]
                 part)]
-    (fn [opts]
-      (->> parts
-           (map #(% opts))
-           (string/join "/")
-           (str "/")))))
+    (fn [opts query-params]
+      (let [query-string (some->> query-params
+                                  (map (partial clojure.string/join "="))
+                                  seq
+                                  (clojure.string/join "&"))
+            path (->> parts
+                      (map #(% opts))
+                      (string/join "/")
+                      (str "/"))]
+        (if query-string
+          (str path "?" query-string)
+          path)))))
 
 (defn- get-paths
   [conformed-routes]
   (let [paths (for [{:keys [route-name route-definition]} conformed-routes
                     :let [path (get-path route-definition)]]
                 [route-name {::path path}])]
-    (into {}  paths)))
+    (into {} paths)))
 
 (defn compile
   [& routes]
@@ -112,10 +119,12 @@
 
 (defn path-for
   ([routes path]
-   (path-for routes path {}))
+   (path-for routes path {} {}))
   ([routes path opts]
+   (path-for routes path opts {}))
+  ([routes path opts query-params]
    (let [paths (::paths routes)
          current-path (or (get-in paths [path ::path])
                           (throw (ex-info "Path doesn't exist" {:path path})))
-         rendered-path (current-path opts)]
+         rendered-path (current-path opts query-params)]
      rendered-path)))
